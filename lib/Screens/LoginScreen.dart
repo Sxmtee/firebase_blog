@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/key.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:newtutorial/Screens/DashboardScreen.dart';
 import 'package:newtutorial/Screens/RegistrationScreen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -18,6 +20,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? email, password;
   String error_msg = "";
+
+  void login() {
+    try {
+      FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailCtrl.text, password: passwordCtrl.text);
+      var route = MaterialPageRoute(builder: (BuildContext) => DashBoard());
+    } catch (e) {
+      setState(() {
+        error_msg = e.toString();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -93,9 +108,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 MaterialButton(
                   onPressed: () {
-                    // if (_formKey.currentState!.validate()) {
-                    //   login();
-                    // }
+                    if (_formKey.currentState!.validate()) {
+                      login();
+                    }
                   },
                   child: Text("Login"),
                   color: Colors.blueGrey,

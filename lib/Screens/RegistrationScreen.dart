@@ -1,6 +1,13 @@
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/key.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({Key? key}) : super(key: key);
@@ -14,11 +21,51 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   var usernameCtrl = TextEditingController();
   var passwordCtrl = TextEditingController();
   var _formKey = GlobalKey<FormState>();
+  FirebaseStorage _storage = FirebaseStorage.instance;
 
   bool isLoading = false;
 
   String? email, username, password;
   String error_msg = "";
+
+  XFile? image;
+
+  void pickImage() async {
+    final ImagePicker _picker = ImagePicker();
+    image = await _picker.pickImage(source: ImageSource.gallery);
+    setState(() {});
+  }
+
+  void register() async {
+    if (image != null) {
+      var imageUrl = await uploadImage();
+
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+              email: emailCtrl.text, password: passwordCtrl.text);
+      var id = userCredential.user!.uid;
+
+      FirebaseFirestore.instance.collection("blogUser").doc(id).set({
+        "id": id,
+        "email": emailCtrl.text,
+        "password": passwordCtrl.text,
+        "username": username,
+        "image_url": imageUrl
+      });
+    } else {}
+  }
+
+  Future<String> uploadImage() async {
+    String fileName = basename(image!.path);
+    Reference reference =
+        FirebaseStorage.instance.ref().child("profileImage/" + fileName);
+    UploadTask uploadTask = reference.putFile(File(image!.path));
+    TaskSnapshot snapshot = await uploadTask;
+    var imageUrl = await snapshot.ref.getDownloadURL();
+    print(imageUrl);
+    return imageUrl;
+  }
+
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
@@ -38,17 +85,21 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       child: CircleAvatar(
                         backgroundColor: Colors.blueGrey,
                         radius: 80,
-                        child: Icon(
-                          Icons.person,
-                          size: 40,
-                        ),
+                        child: image == null
+                            ? Icon(
+                                Icons.person,
+                                size: 40,
+                              )
+                            : Image.file(File(image!.path), fit: BoxFit.fill),
                       ),
                     ),
                     Positioned(
                         top: 140,
                         right: 120,
                         child: MaterialButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            pickImage();
+                          },
                           color: Colors.blueGrey,
                           padding: EdgeInsets.all(20),
                           child: Icon(Icons.add_a_photo_rounded),
@@ -133,9 +184,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
                 MaterialButton(
                   onPressed: () {
-                    // if (_formKey.currentState!.validate()) {
-                    //   register();
-                    // }
+                    if (_formKey.currentState!.validate()) {
+                      register();
+                    }
                   },
                   child: Text("Register"),
                   color: Colors.blueGrey,
