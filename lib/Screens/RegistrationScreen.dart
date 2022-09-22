@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/foundation/key.dart';
 import 'package:flutter/src/widgets/framework.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart';
+import 'package:newtutorial/Screens/DashboardScreen.dart';
+import 'package:path/path.dart' as path;
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({Key? key}) : super(key: key);
@@ -52,11 +53,14 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         "username": username,
         "image_url": imageUrl
       });
+
+      var route = MaterialPageRoute(builder: (BuildContext) => DashBoard());
+      Navigator.push(context, route);
     } else {}
   }
 
   Future<String> uploadImage() async {
-    String fileName = basename(image!.path);
+    String fileName = path.basename(image!.path);
     Reference reference =
         FirebaseStorage.instance.ref().child("profileImage/" + fileName);
     UploadTask uploadTask = reference.putFile(File(image!.path));
